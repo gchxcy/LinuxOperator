@@ -1,0 +1,167 @@
+#!/bin/bash
+
+
+### rpm/src包名，请根据实际情况修改
+# apache请下tar.gz版
+apache_version=2.4.20
+
+### 可自定义信息，但是不建议修改
+# apache安装位置/opt/apache，链接到/usr/local/apache
+apache_install_dir=/usr/local/apache
+apache_install_dir_real=/opt/apache
+# php和php-fpm日志位置，相对路径指的是安装目录var/，建议以下设置
+php_log_dir=/data/phplog
+php_log=${php_log_dir}/php_errors.log
+php_fpm_log=${php_log_dir}/php-fpm.log
+# 站点根目录及日志
+php_web_dir=/data/phpwebroot/default
+php_weblog_dir=/data/phpweblog
+
+# apache进程运行账号，如果Nginx，Apache作为服务器，可以考虑统一
+run_user=apache
+useradd -M -s /sbin/nologin $run_user 
+
+# 创建php目录
+mkdir -p $php_install_dir_real
+ln -s $php_install_dir_real $php_install_dir
+mkdir -p $php_log_dir
+mkdir -p $php_web_dir
+mkdir -p $php_weblog_dir
+
+### Tomcat Connector的三种不同的运行模式
+# ■ BIO：
+# 一个线程处理一个请求。
+# 缺点：并发量高时，线程数较多，浪费资源。
+# Tomcat7或以下，在Linux系统中默认使用这种方式。
+# ■ NIO：
+# 利用Java的异步IO处理，可以通过少量的线程处理大量的请求。
+# Tomcat8在Linux系统中默认使用这种方式。
+# Tomcat7必须修改Connector配置来启动.
+# ■ APR：
+# 即Apache Portable Runtime，从操作系统层面解决io阻塞问题。
+# Linux如果安装了apr和native，Tomcat直接启动就支持apr。
+
+# 安装 tomcat-native依赖库apr apr-devel
+#yum -y install apr apr-devel apr-util
+
+tar xzf httpd-$apache_4_version.tar.gz
+tar xzf apr-$apr_version.tar.gz
+tar xzf apr-util-$apr_util_version.tar.gz
+cd httpd-$apache_4_version
+[ ! -d "$apache_install_dir" ] && mkdir -p $apache_install_dir
+/bin/cp -R ../apr-$apr_version ./srclib/apr
+/bin/cp -R ../apr-util-$apr_util_version ./srclib/apr-util
+[ "$ZendGuardLoader_yn" == 'y' -o "$ionCube_yn" == 'y' ] && MPM=prefork || MPM=worker
+./configure --prefix=$apache_install_dir --enable-headers --enable-deflate --enable-mime-magic --enable-so --enable-rewrite --enable-ssl --with-ssl --enable-expires --enable-static-support --enable-suexec --disable-userdir --with-included-apr --with-mpm=$MPM --disable-userdir
+make && make install
+if [ -e "$apache_install_dir/conf/httpd.conf" ];then
+    echo "${CSUCCESS}Apache install successfully! ${CEND}"
+    cd ..
+    rm -rf httpd-$apache_4_version
+else
+    rm -rf $apache_install_dir
+    echo "${CFAILURE}Apache install failed, Please contact the author! ${CEND}"
+    kill -9 $$
+fi
+
+[ -z "`grep ^'export PATH=' /etc/profile`" ] && echo "export PATH=$apache_install_dir/bin:\$PATH" >> /etc/profile 
+[ -n "`grep ^'export PATH=' /etc/profile`" -a -z "`grep $apache_install_dir /etc/profile`" ] && sed -i "s@^export PATH=\(.*\)@export PATH=$apache_install_dir/bin:\1@" /etc/profile
+. /etc/profile
+
+/bin/cp $apache_install_dir/bin/apachectl /etc/init.d/httpd
+sed -i '2a # chkconfig: - 85 15' /etc/init.d/httpd
+sed -i '3a # description: Apache is a World Wide Web server. It is used to serve' /etc/init.d/httpd
+chmod +x /etc/init.d/httpd
+[ "$OS" == 'CentOS' ] && { chkconfig --add httpd; chkconfig httpd on; }
+[[ $OS =~ ^Ubuntu$|^Debian$ ]] && update-rc.d httpd defaults
+
+sed -i "s@^User daemon@User $run_user@" $apache_install_dir/conf/httpd.conf
+sed -i "s@^Group daemon@Group $run_user@" $apache_install_dir/conf/httpd.conf
+if [ "$Nginx_version" == '4' -a ! -e "$web_install_dir/sbin/nginx" ];then
+    sed -i 's/^#ServerName www.example.com:80/ServerName 0.0.0.0:80/' $apache_install_dir/conf/httpd.conf
+    TMP_PORT=80
+    TMP_IP=$IPADDR
+elif [[ $Nginx_version =~ ^[1-3]$ ]] || [ -e "$web_install_dir/sbin/nginx" ];then 
+    sed -i 's/^#ServerName www.example.com:80/ServerName 127.0.0.1:88/' $apache_install_dir/conf/httpd.conf
+    sed -i 's@^Listen.*@Listen 127.0.0.1:88@' $apache_install_dir/conf/httpd.conf
+    TMP_PORT=88
+    TMP_IP=127.0.0.1
+fi
+sed -i "s@AddType\(.*\)Z@AddType\1Z\n    AddType application/x-httpd-php .php .phtml\n    AddType application/x-httpd-php-source .phps@" $apache_install_dir/conf/httpd.conf
+sed -i "s@#AddHandler cgi-script .cgi@AddHandler cgi-script .cgi .pl@" $apache_install_dir/conf/httpd.conf
+sed -i 's@^#LoadModule rewrite_module@LoadModule rewrite_module@' $apache_install_dir/conf/httpd.conf
+sed -i 's@^#LoadModule\(.*\)mod_deflate.so@LoadModule\1mod_deflate.so@' $apache_install_dir/conf/httpd.conf
+sed -i 's@DirectoryIndex index.html@DirectoryIndex index.html index.php@' $apache_install_dir/conf/httpd.conf
+sed -i "s@^DocumentRoot.*@DocumentRoot \"$wwwroot_dir/default\"@" $apache_install_dir/conf/httpd.conf
+sed -i "s@^<Directory \"$apache_install_dir/htdocs\">@<Directory \"$wwwroot_dir/default\">@" $apache_install_dir/conf/httpd.conf
+sed -i "s@^#Include conf/extra/httpd-mpm.conf@Include conf/extra/httpd-mpm.conf@" $apache_install_dir/conf/httpd.conf
+
+#logrotate apache log
+cat > /etc/logrotate.d/apache << EOF
+$wwwlogs_dir/*apache.log {
+daily
+rotate 5
+missingok
+dateext
+compress
+notifempty
+sharedscripts
+postrotate
+[ -f $apache_install_dir/logs/httpd.pid ] && kill -USR1 \`cat $apache_install_dir/logs/httpd.pid\`
+endscript
+}
+EOF
+
+mkdir $apache_install_dir/conf/vhost
+cat >> $apache_install_dir/conf/vhost/0.conf << EOF
+<VirtualHost *:$TMP_PORT>
+    ServerAdmin admin@linuxeye.com
+    DocumentRoot "$wwwroot_dir/default"
+    ServerName $TMP_IP 
+    ErrorLog "$wwwlogs_dir/error_apache.log"
+    CustomLog "$wwwlogs_dir/access_apache.log" common
+<Directory "$wwwroot_dir/default">
+    SetOutputFilter DEFLATE
+    Options FollowSymLinks ExecCGI
+    Require all granted
+    AllowOverride All
+    Order allow,deny
+    Allow from all
+    DirectoryIndex index.html index.php
+</Directory>
+<Location /server-status>
+    SetHandler server-status
+    Order Deny,Allow
+    Deny from all
+    Allow from 127.0.0.1 
+</Location>
+</VirtualHost>
+EOF
+
+cat >> $apache_install_dir/conf/httpd.conf <<EOF
+<IfModule mod_headers.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript
+    <FilesMatch "\.(js|css|html|htm|png|jpg|swf|pdf|shtml|xml|flv|gif|ico|jpeg)\$">
+        RequestHeader edit "If-None-Match" "^(.*)-gzip(.*)\$" "\$1\$2"
+        Header edit "ETag" "^(.*)-gzip(.*)\$" "\$1\$2"
+    </FilesMatch>
+    DeflateCompressionLevel 6
+    SetOutputFilter DEFLATE
+</IfModule>
+
+ServerTokens ProductOnly
+ServerSignature Off
+Include conf/vhost/*.conf
+EOF
+
+if [ "$Nginx_version" != '4' -o -e "$web_install_dir/sbin/nginx" ];then
+    cat > $apache_install_dir/conf/extra/httpd-remoteip.conf << EOF
+LoadModule remoteip_module modules/mod_remoteip.so
+RemoteIPHeader X-Forwarded-For
+RemoteIPInternalProxy 127.0.0.1
+EOF
+    sed -i "s@Include conf/extra/httpd-mpm.conf@Include conf/extra/httpd-mpm.conf\nInclude conf/extra/httpd-remoteip.conf@" $apache_install_dir/conf/httpd.conf
+    sed -i "s@LogFormat \"%h %l@LogFormat \"%h %a %l@g" $apache_install_dir/conf/httpd.conf
+fi
+service httpd start
+cd ..
