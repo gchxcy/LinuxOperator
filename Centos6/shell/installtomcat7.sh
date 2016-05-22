@@ -108,7 +108,7 @@ make && make install
 cd ../../..
 rm -rf tomcat-native-*-src
 
-### 优化tomcat，并使用启用apr模式
+### 优化tomcat，并启用apr模式
 # 以上几个apr相关的lib文件全部安装到了/usr/local/apr/lib
 # 创建环境变量，tomcat启动程序自动调用setenv.sh
 Mem=`free -m | awk '/Mem:/{print $2}'`

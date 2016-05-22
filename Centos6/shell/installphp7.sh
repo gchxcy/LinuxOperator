@@ -17,7 +17,7 @@ php_install_dir_real=/opt/php7
 php_log_dir=/data/phplog
 php_log=${php_log_dir}/php_errors.log
 php_fpm_log=${php_log_dir}/php-fpm.log
-# 站点根目录及日志
+# 站点根目录及访问日志
 php_web_dir=/data/phpwebroot/default
 php_weblog_dir=/data/phpweblog
 
@@ -314,7 +314,7 @@ fi
 # Nginx也要启用#fastcgi_pass remote_php_ip:9000;
 # sed -i "s@^listen =.*@listen = 127.0.0.1:9000@" $php_install_dir/etc/php-fpm.conf 
 
-# 编译软件后加载一下
+# 编译软件后建议加载一下
 ldconfig
 service php-fpm start
 echo "php-$php_version install successfully! "
