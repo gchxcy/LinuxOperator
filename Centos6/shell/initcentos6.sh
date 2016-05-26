@@ -41,7 +41,9 @@ fi
 # 使用说明：https://fedoraproject.org/wiki/EPEL/zh-cn
 # 企业版 Linux 附加软件包（EPEL）是一个由特别兴趣小组创建、维护并管理的，针对 红帽企业版 Linux(RHEL)及其衍生发行版(比如 CentOS、Scientific Linux、Oracle Enterprise Linux)的一个高质量附加软件包项目。 
 # EPEL 的软件包通常不会与企业版 Linux 官方源中的软件包发生冲突，或者互相替换文件。EPEL 项目与 Fedora 基本一致，包含完整的构建系统、升级管理器、镜像管理器等等。 
-# yum -y install http://mirrors.isu.net.sa/pub/fedora/fedora-epel/6/i386/epel-release-6-8.noarch.rpm
+# yum -y install epel-release
+# 安装yum加速插件
+# yum -y install yum-axelget
 
 # 升级重要的具有典型漏洞的软件包
 yum -y update bash openssl glibc
