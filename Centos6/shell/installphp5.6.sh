@@ -81,7 +81,7 @@ make && make install
 cd ../../
 rm -rf libmcrypt-$libmcrypt_version
 
-# mhash是基于离散数学原理的不可逆向的php加密方式扩展库，mhash的可以用于创建校验数值，消息摘要，消息认证码，以及无需原文的关键信息保存（如密码）等。
+# mhash是基于离散数学原理的不可逆向的php加密方式扩展库，mhash可以用于创建校验数值，消息摘要，消息认证码，以及无需原文的关键信息保存（如密码）等。
 mhash_version=0.9.9.9
 tar xzf src/mhash-$mhash_version.tar.gz
 cd mhash-$mhash_version
