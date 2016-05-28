@@ -8,14 +8,15 @@ rpm -ivh yum/python-*
 rpm -ivh yum/yum-*
 rpm -ivh yum/centos-*
 
-# 复制CentOS7标准源
-cp yum/CentOS-Base.repo /etc/yum.repos.d/ -f
-# 添加国内163源
-# cp yum/CentOS7-Base-163.repo /etc/yum.repos.d/ -f
-# 添加国内aliyun源
+# 启用CentOS7标准源
+# cp yum/CentOS-Base.repo /etc/yum.repos.d/ -f
+# 启用国内163源
+cp yum/CentOS7-Base-163.repo /etc/yum.repos.d/ -f
+# 启用国内aliyun源
 # cp yum/Centos-7-aliyun.repo /etc/yum.repos.d/ -f
-# 修正
-sed -i 's/\$releasever/7/g' /etc/yum.repos.d/Cent*.repo
+# 修正$releasever无法读取的bug
+#sed -i "s@\$releasever@`cat /etc/redhat-release |awk '{print $7}'`@g" /etc/yum.repos.d/Cent*.repo
+sed -i "s@\$releasever@7.2.1511@g" /etc/yum.repos.d/Cent*.repo
 
 ### 使用企业版Linux附加软件包（EPEL）
 # 使用说明：https://fedoraproject.org/wiki/EPEL/zh-cn
