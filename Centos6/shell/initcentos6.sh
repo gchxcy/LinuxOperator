@@ -132,4 +132,4 @@ ntpdate pool.ntp.org
 service crond restart
 
 # 配置后重启
-shutdown -r +1 "将重启系统..."
+shutdown -r +1 "Restarting the System..."
