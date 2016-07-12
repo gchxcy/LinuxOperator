@@ -57,6 +57,7 @@ apt install winehq-staging -y
 # 下载地址：http://www.google.cn/chrome/browser/desktop/index.html
 # dpkg -i app/google-chrome*.deb
 # wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+apt-key add app/linux_signing_key.pub
 cat >/etc/apt/sources.list.d/google-chrome.list<<EOF
 deb http://dl.google.com/linux/chrome/deb/ stable main
 EOF
@@ -83,12 +84,19 @@ dpkg -i app/symbol-fonts_*deb
 mkdir /usr/share/fonts/winfonts
 cp -f winfonts/* /usr/share/fonts/winfonts
 chmod -R 744 /usr/share/fonts/winfonts
+cd /usr/share/fonts/winfonts 
 mkfontscale
 mkfontdir
 fc-cache -fv
+cd -
 
 # 安装Windows字体包
 dpkg -i app/winfonts_*deb
+
+# fonts-noto-cjk:思源黑体
+# cjk:Chinese/Japanese/Korean
+# 思源黑体是Adobe与Google宣布推出的一款开源字体
+# apt install fonts-noto-cjk
 
 # Beyond Compare，文本比较工具
 dpkg -i app/bcompare*.deb
@@ -108,6 +116,9 @@ dpkg -i app/wine-qqintl_*.deb
 # 有道词典，版本不能太高，高版本只支持Ubuntu的deb格式
 apt install python3-xlib -y
 dpkg -i app/youdao-dict_*.deb
+
+# FFmpeg是一套可以用来记录、转换数字音频、视频，并能将其转化为流的开源计算机程序
+# apt install ffmpeg
 
 # 网易云播放器，版本不能太高，高版本只支持Ubuntu的deb格式
 dpkg -i app/netease-cloud-music_*.deb
@@ -145,7 +156,7 @@ chmod +x /tmp/VMware-Workstation-*
 rm -f /tmp/VMware-Workstation-*
 
 # TODO::仿Windows桌面主题设置
-# Windows桌面字体：西文,Tahoma;等线体,Arial;中文,宋体;
+# Windows桌面字体：西文,Tahoma;等线体,Arial;中文,宋体;文档,Consolas;
 # 图标：themes/Win10.Icons，整个文件夹复制/usr/share/icons下
 # 指针: themes/Win8.Cursors，整个文件夹复制/usr/share/icons下
 

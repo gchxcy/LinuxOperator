@@ -33,6 +33,9 @@ apt remove libreoffice* -y
 apt remove pidgin -y 
 apt remove firefox* -y
 
+# 删除光驱源
+sed -i '/deb cdrom/d' /etc/apt/sources.list
+
 ### 使用[163][中科大]源
 cat >/etc/apt/sources.list.d/official-package-repositories.list<<EOF
 deb http://mirrors.ustc.edu.cn/linuxmint betsy main upstream import 
@@ -62,7 +65,7 @@ apt install linuxmint-keyring -y --force-yes
 # 安装deb-multimedia密钥
 apt install deb-multimedia-keyring -y --force-yes
 # 重新更新缓存，使密钥生效
-apt update
+apt update -y
 
 # 修正vim方向键变字母问题
 apt install vim -y 
