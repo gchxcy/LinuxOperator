@@ -204,6 +204,10 @@ apt install zip unzip -y
 apt install rar unrar -y
 # deb安装器，gdebi
 
+### 注册插件
+# 添加目录右击并选择“以管理员身份打开（Open as administrator）”选项
+apt install caja-gksu
+
 # 修正依赖
 apt-get -f install -y
 
